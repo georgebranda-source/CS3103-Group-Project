@@ -15,11 +15,10 @@ placing unnecessary delays inside critical sections protected by mutex locks.
 For Q3, real-time delay must not be used. Scheduling behavior should be simulated
 using logical time derived from the input.
 
+Group: I'm not sure what our group number is
 
-/* Group: I'm not sure what our group number is
-   Members: George Branda (gfbranda2, ID: 40172013)
-            BBBBB  (EID,  ID: 55yyyyyy)
-            CCCCC  (EID,  ID: 55yyyyyy)
-    Compilation information:
+Members: George Branda (gfbranda2, ID: 40172013)
+         BBBBB  (EID,  ID: 55yyyyyy)
+         CCCCC  (EID,  ID: 55yyyyyy)
 
-*/
+Compilation information: [...]
