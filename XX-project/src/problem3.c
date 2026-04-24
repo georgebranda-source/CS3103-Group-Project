@@ -14,31 +14,47 @@ typedef struct {
     int waiting_time;
 } Job;
 
-void fcfs(Job jobs[], int n) {
-    printf("=== FCFS ===\nGantt: ");
 
-    //FCFS Calculation loop & Gantt chart (iterates by job in list):
+// --- FCFS calculation ---
+void fcfs(Job jobs[], int n, Job results[]) {
     int time = 0;
     for (int i = 0; i < n; i++) {
         if (time < jobs[i].arrival_time) {
             time = jobs[i].arrival_time;
         }
         time += jobs[i].burst_time;
-        jobs[i].completion_time = time;
-        jobs[i].turnaround_time = jobs[i].completion_time - jobs[i].arrival_time;
-        jobs[i].waiting_time = jobs[i].turnaround_time - jobs[i].burst_time;
+
+        // copy original fields
+        strcpy(results[i].job_id, jobs[i].job_id);
+        results[i].arrival_time = jobs[i].arrival_time;
+        results[i].burst_time   = jobs[i].burst_time;
+        results[i].priority     = jobs[i].priority;
+
+        // computed fields
+        results[i].completion_time = time;
+        results[i].turnaround_time = results[i].completion_time - results[i].arrival_time;
+        results[i].waiting_time    = results[i].turnaround_time - results[i].burst_time;
+    }
+}
+
+// --- Generic printer ---
+void print_schedule(const char *label, Job jobs[], int n) {
+    printf("=== %s ===\nGantt: ", label);
+
+    // Gantt chart jobs
+    for (int i = 0; i < n; i++) {
         printf("| %s ", jobs[i].job_id);
     }
     printf("|\n");
 
-    //Prints the time that each job in the Gantt began, followed by the final time of completion
+    // Timeline
     printf("Time: ");
     for (int i = 0; i < n; i++) {
         printf("%d ", jobs[i].completion_time - jobs[i].burst_time);
     }
-    printf("%d", jobs[n-1].completion_time);
-    printf("\n\n");
-/*
+    printf("%d\n\n", jobs[n-1].completion_time);
+
+    // Table
     printf("Job\tAT\tBT\tCT\tTAT\tWT\n");
     double total_tat = 0, total_wt = 0;
     for (int i = 0; i < n; i++) {
@@ -50,12 +66,11 @@ void fcfs(Job jobs[], int n) {
                jobs[i].turnaround_time,
                jobs[i].waiting_time);
         total_tat += jobs[i].turnaround_time;
-        total_wt += jobs[i].waiting_time;
+        total_wt  += jobs[i].waiting_time;
     }
     printf("\nAverage Turnaround Time : %.2f\n", total_tat / n);
     printf("Average Waiting Time : %.2f\n", total_wt / n);
-    printf("CPU Utilisation : 100.0%%\n");
-    */
+    printf("CPU Utilisation : 100.0%%\n\n");
 }
 
 int main() {
