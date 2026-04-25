@@ -107,6 +107,82 @@ int sjf_preemptive(Job jobs[], int n, Job results[], GanttEntry gantt[]) {
     return gcount;
 }
 
+int round_robin(Job jobs[], int n, Job results[], GanttEntry gantt[], int quantum) {
+    int remaining[MAX_JOBS];
+    int time = 0, completed = 0, gcount = 0;
+    int is_completed[MAX_JOBS] = {0};
+
+    for (int i = 0; i < n; i++) {
+        remaining[i] = jobs[i].burst_time;
+    }
+
+    // ready queue indices
+    int queue[MAX_JOBS];
+    int front = 0, rear = 0;
+
+    // initially enqueue jobs that arrive at time 0
+    for (int i = 0; i < n; i++) {
+        if (jobs[i].arrival_time <= time) {
+            queue[rear++] = i;
+        }
+    }
+
+    while (completed < n) {
+        if (front == rear) {
+            // no jobs ready, advance time
+            time++;
+            for (int i = 0; i < n; i++) {
+                if (jobs[i].arrival_time <= time && !is_completed[i] && remaining[i] > 0) {
+                    queue[rear++] = i;
+                }
+            }
+            continue;
+        }
+
+        int idx = queue[front++];
+        if (front == MAX_JOBS) front = 0; // circular queue
+
+        if (remaining[idx] <= 0 || is_completed[idx]) continue;
+
+        // record Gantt entry
+        gantt[gcount].start_time = time;
+        strcpy(gantt[gcount].job_id, jobs[idx]);
+
+        int run_time = (remaining[idx] < quantum) ? remaining[idx] : quantum;
+        time += run_time;
+        remaining[idx] -= run_time;
+
+        gantt[gcount].end_time = time;
+        gcount++;
+
+        // enqueue newly arrived jobs during this quantum
+        for (int i = 0; i < n; i++) {
+            if (jobs[i].arrival_time > gantt[gcount-1].start_time &&
+                jobs[i].arrival_time <= time &&
+                !is_completed[i] && remaining[i] > 0) {
+                queue[rear++] = i;
+                if (rear == MAX_JOBS) rear = 0;
+            }
+        }
+
+        // re-enqueue current job if not finished
+        if (remaining[idx] > 0) {
+            queue[rear++] = idx;
+            if (rear == MAX_JOBS) rear = 0;
+        } else {
+            is_completed[idx] = 1;
+            completed++;
+
+            results[idx] = jobs[idx];
+            results[idx].completion_time = time;
+            results[idx].turnaround_time = time - jobs[idx].arrival_time;
+            results[idx].waiting_time = results[idx].turnaround_time - jobs[idx].burst_time;
+        }
+    }
+
+    return gcount;
+}
+
 
 void print_schedule(const char *label, Job jobs[], int n, GanttEntry gantt[], int gcount) {
     printf("\n=== %s ===\n", label);
@@ -154,7 +230,9 @@ int main() {
     }
 
     Job jobs[MAX_JOBS], fcfs_results[MAX_JOBS], sjf_results[MAX_JOBS];
-    GanttEntry gantt_fcfs[MAX_JOBS * 10], gantt_sjf[MAX_JOBS * 10];
+    Job rr3_results[MAX_JOBS], rr6_results[MAX_JOBS];
+    GanttEntry gantt_fcfs[MAX_JOBS * 10], gantt_sjf[MAX_JOBS * 50];
+    GanttEntry gantt_rr3[MAX_JOBS * 50], gantt_rr6[MAX_JOBS * 50];
     int n = 0;
 
     while (fscanf(fp, "%s %d %d %d",
@@ -173,6 +251,14 @@ int main() {
     // Preemptive SJF
     int gcount_sjf = sjf_preemptive(jobs, n, sjf_results, gantt_sjf);
     print_schedule("Preemptive SJF", sjf_results, n, gantt_sjf, gcount_sjf);
+
+    // Round Robin q=3
+    int gcount_rr3 = round_robin(jobs, n, rr3_results, gantt_rr3, 3);
+    print_schedule("Round Robin (q=3)", rr3_results, n, gantt_rr3, gcount_rr3);
+
+    // Round Robin q=6
+    int gcount_rr6 = round_robin(jobs, n, rr6_results, gantt_rr6, 6);
+    print_schedule("Round Robin (q=6)", rr6_results, n, gantt_rr6, gcount_rr6);
 
     return 0;
 }
