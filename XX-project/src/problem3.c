@@ -17,7 +17,10 @@ typedef struct {
 
 // --- FCFS calculation ---
 void fcfs(Job jobs[], int n, Job results[]) {
-    int time = 0;
+
+    intprintf("\n=== %s ===\nGantt: ", label);
+
+    time = 0;
     for (int i = 0; i < n; i++) {
         if (time < jobs[i].arrival_time) {
             time = jobs[i].arrival_time;
@@ -34,19 +37,15 @@ void fcfs(Job jobs[], int n, Job results[]) {
         results[i].completion_time = time;
         results[i].turnaround_time = results[i].completion_time - results[i].arrival_time;
         results[i].waiting_time    = results[i].turnaround_time - results[i].burst_time;
+
+	//Print Gantt chart
+	printf("| %s ", jobs[i].job_id);
+	printft("|\n");
     }
 }
 
 // --- Generic printer ---
 void print_schedule(const char *label, Job jobs[], int n) {
-    printf("\n=== %s ===\nGantt: ", label);
-
-    // Gantt chart jobs
-    for (int i = 0; i < n; i++) {
-        printf("| %s ", jobs[i].job_id);
-    }
-    printf("|\n");
-
     // Timeline
     printf("Time: ");
     for (int i = 0; i < n; i++) {
