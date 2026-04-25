@@ -14,18 +14,22 @@ typedef struct {
     int waiting_time;
 } Job;
 
+typedef struct {
+    char job_id[10];  // which job ran
+    int start_time;   // when it started
+    int end_time;     // when it finished
+} GanttEntry;
+
 
 // --- FCFS calculation ---
-void fcfs(Job jobs[], int n, Job results[]) {
+int fcfs(Job jobs[], int n, Job results[], GanttEntry gantt[]) {
+    int time = 0;
+    int gcount = 0;  // number of Gantt entries
 
-    intprintf("\n=== %s ===\nGantt: ", label);
-
-    time = 0;
     for (int i = 0; i < n; i++) {
         if (time < jobs[i].arrival_time) {
             time = jobs[i].arrival_time;
         }
-        time += jobs[i].burst_time;
 
         // copy original fields
         strcpy(results[i].job_id, jobs[i].job_id);
@@ -33,27 +37,40 @@ void fcfs(Job jobs[], int n, Job results[]) {
         results[i].burst_time   = jobs[i].burst_time;
         results[i].priority     = jobs[i].priority;
 
+        // record Gantt entry
+        gantt[gcount].start_time = time;
+        time += jobs[i].burst_time;
+        gantt[gcount].end_time = time;
+        strcpy(gantt[gcount].job_id, jobs[i].job_id);
+        gcount++;
+
         // computed fields
         results[i].completion_time = time;
         results[i].turnaround_time = results[i].completion_time - results[i].arrival_time;
         results[i].waiting_time    = results[i].turnaround_time - results[i].burst_time;
-
-	//Print Gantt chart
-	printf("| %s ", jobs[i].job_id);
-	printft("|\n");
     }
+
+    return gcount; // return how many entries were filled
 }
 
-// --- Generic printer ---
-void print_schedule(const char *label, Job jobs[], int n) {
+void print_schedule(const char *label, Job jobs[], int n, GanttEntry gantt[], int gcount) {
+    printf("\n=== %s ===\n", label);
+
+    // Gantt chart
+    printf("Gantt: ");
+    for (int i = 0; i < gcount; i++) {
+        printf("| %s ", gantt[i].job_id);
+    }
+    printf("|\n");
+
     // Timeline
     printf("Time: ");
-    for (int i = 0; i < n; i++) {
-        printf("%d ", jobs[i].completion_time - jobs[i].burst_time);
+    for (int i = 0; i < gcount; i++) {
+        printf("%d ", gantt[i].start_time);
     }
-    printf("%d\n\n", jobs[n-1].completion_time);
+    printf("%d\n\n", gantt[gcount-1].end_time);
 
-    // Table
+    // Table of metrics
     printf("Job\tArriv.\tBurst\tComp.\tTurn.\tWait.\n");
     double total_tat = 0, total_wt = 0, total_activet = 0;
     for (int i = 0; i < n; i++) {
@@ -66,12 +83,13 @@ void print_schedule(const char *label, Job jobs[], int n) {
                jobs[i].waiting_time);
         total_tat += jobs[i].turnaround_time;
         total_wt  += jobs[i].waiting_time;
-	total_activet += jobs[i].burst_time;
+        total_activet += jobs[i].burst_time;
     }
     printf("\nAverage Turnaround Time : %.2f\n", total_tat / n);
     printf("Average Waiting Time : %.2f\n", total_wt / n);
     printf("CPU Utilisation : %.1f%%\n\n", (total_activet / jobs[n-1].completion_time) * 100);
 }
+
 
 int main() {
     FILE *fp = fopen("./test_cases/q3/case1.txt", "r");
@@ -80,8 +98,8 @@ int main() {
         return 1;
     }
 
-    Job jobs[MAX_JOBS];
-    Job fcfs_results[MAX_JOBS];
+    Job jobs[MAX_JOBS], fcfs_results[MAX_JOBS];
+    GanttEntry gantt[MAX_JOBS * 10]; // allow extra for RR/MLFQ
     int n = 0;
 
     while (fscanf(fp, "%s %d %d %d",
@@ -95,8 +113,8 @@ int main() {
 
     fclose(fp);
 
-    fcfs(jobs, n, fcfs_results);
-    print_schedule("FCFS", fcfs_results, n);
+    int gcount = fcfs(jobs, n, fcfs_results, gantt);
+    print_schedule("FCFS", fcfs_results, n, gantt, gcount);
 
     // TODO: implement Preemptive SJF, RR (q=3,6), MLFQ
     return 0;
