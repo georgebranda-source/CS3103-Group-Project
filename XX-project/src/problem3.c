@@ -321,10 +321,16 @@ int mlfq(Job jobs[], int n, Job results[], GanttEntry gantt[]) {
 }
 
 
-int main() {
-    FILE *fp = fopen("./test_cases/q3/case1.txt", "r");
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s <input_file>\n", argv[0]);
+        return 1;
+    }
+
+    const char *filepath = argv[1];
+    FILE *fp = fopen(filepath, "r");
     if (!fp) {
-        perror("DISASTER: TEST CASES NOT FOUND");
+        perror("FILEPATH TO .txt NOT FOUND. SELF DESTRUCTING...");
         return 1;
     }
 
@@ -336,10 +342,10 @@ int main() {
     int n = 0;
 
     while (fscanf(fp, "%s %d %d %d",
-              jobs[n].job_id,
-              &jobs[n].arrival_time,
-              &jobs[n].burst_time,
-              &jobs[n].priority) == 4) {
+                  jobs[n].job_id,
+                  &jobs[n].arrival_time,
+                  &jobs[n].burst_time,
+                  &jobs[n].priority) == 4) {
         n++;
     }
     fclose(fp);
