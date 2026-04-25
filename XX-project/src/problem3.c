@@ -249,7 +249,7 @@ int mlfq(Job jobs[], int n, Job results[], GanttEntry gantt[]) {
     //Finally FCFS
     while (completed < n) {
         int next_job = -1;
-        int earliest_arrival = INT_MAX;
+        int earliest_arrival = 1000000;
         for (int i = 0; i < n; i++) {
             if (!is_completed[i] && jobs[i].arrival_time < earliest_arrival) {
                 earliest_arrival = jobs[i].arrival_time;
