@@ -4,7 +4,7 @@ The helper provides:
 - delay_ms(unsigned int ms): sleep for a specified number of milliseconds
 - simulate_work(SimOp op): simulate the processing time of a specific operation type
 
-For Q0 and Q2, students may use simulate_work(...) when modeling active work,
+For Q1 and Q2, students may use simulate_work(...) when modeling active work,
 such as quantization, encoding, logging, directory reading, manager handling,
 and directory updates.
 
@@ -23,6 +23,7 @@ using logical time derived from the input.
 Group: I'm not sure what our group number is
 
 Members: George Branda (gfbranda2, ID: 40172013)
+         Chu Wing Hang (whcchu2, ID: 58668101)
          BBBBB  (EID,  ID: 55yyyyyy)
          CCCCC  (EID,  ID: 55yyyyyy)
 
