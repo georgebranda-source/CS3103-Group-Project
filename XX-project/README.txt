@@ -27,6 +27,5 @@ Members: George Branda (gfbranda2, ID: 40172013)
          Jaehaeng HER (jaehaeher3, ID: 55772629)
 
 Compilation information:
-- make (with no arguments): compile all problems into a single executable. 
 - make problemN: create an executable just for that problem.
 - make clean: clear all executables and object files (stored in bin).  

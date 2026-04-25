@@ -333,6 +333,8 @@ int main(int argc, char *argv[]) {
     }
     fclose(fp);
 
+    //Run all of hte algorithms and print their results
+
     int gcount_fcfs = fcfs(jobs, n, fcfs_results, gantt_fcfs);
     print_schedule("FCFS", fcfs_results, n, gantt_fcfs, gcount_fcfs);
 
