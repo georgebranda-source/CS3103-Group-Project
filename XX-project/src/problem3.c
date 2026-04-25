@@ -204,6 +204,7 @@ void print_schedule(const char *label, Job jobs[], int n, GanttEntry gantt[], in
     // Table of metrics
     printf("Job\tArriv.\tBurst\tComp.\tTurn.\tWait.\n");
     double total_tat = 0, total_wt = 0, total_activet = 0;
+    int earliest_arrival = jobs[0].arrival_time;
     for (int i = 0; i < n; i++) {
         printf("%s\t%d\t%d\t%d\t%d\t%d\n",
                jobs[i].job_id,
@@ -215,11 +216,17 @@ void print_schedule(const char *label, Job jobs[], int n, GanttEntry gantt[], in
         total_tat += jobs[i].turnaround_time;
         total_wt  += jobs[i].waiting_time;
         total_activet += jobs[i].burst_time;
+        if (jobs[i].arrival_time < earliest_arrival) {
+            earliest_arrival = jobs[i].arrival_time;
+        }
     }
+
+    double schedule_length = gantt[gcount-1].end_time - earliest_arrival;
     printf("\nAverage Turnaround Time : %.2f\n", total_tat / n);
     printf("Average Waiting Time : %.2f\n", total_wt / n);
-    printf("CPU Utilisation : %.1f%%\n\n", (total_activet / jobs[n-1].completion_time) * 100);
+    printf("CPU Utilisation : %.1f%%\n\n", (total_activet / schedule_length) * 100.0);
 }
+
 
 
 int main() {
