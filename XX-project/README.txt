@@ -24,8 +24,7 @@ Group: I'm not sure what our group number is
 
 Members: George Branda (gfbranda2, ID: 40172013)
          Chu Wing Hang (whcchu2, ID: 58668101)
-         BBBBB  (EID,  ID: 55yyyyyy)
-         CCCCC  (EID,  ID: 55yyyyyy)
+         Jaehaeng HER (jaehaeher3, ID: 55772629)
 
 Compilation information:
 - make (with no arguments): compile all problems into a single executable. 
