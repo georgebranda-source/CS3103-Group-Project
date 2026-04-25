@@ -227,6 +227,98 @@ void print_schedule(const char *label, Job jobs[], int n, GanttEntry gantt[], in
     printf("CPU Utilisation : %.1f%%\n\n", (total_activet / schedule_length) * 100.0);
 }
 
+int mlfq(Job jobs[], int n, Job results[], GanttEntry gantt[]) {
+    int remaining[MAX_JOBS];
+    for (int i = 0; i < n; i++) {
+        remaining[i] = jobs[i].burst_time;
+    }
+
+    int gcount = 0;
+    int time = 0;
+    int completed = 0;
+    int is_completed[MAX_JOBS] = {0};
+
+    // --- Level 1: RR q=4 ---
+    while (completed < n) {
+        int progress = 0;
+        for (int i = 0; i < n; i++) {
+            if (!is_completed[i] && jobs[i].arrival_time <= time && remaining[i] > 0) {
+                progress = 1;
+                gantt[gcount].start_time = time;
+                strcpy(gantt[gcount].job_id, jobs[i].job_id);
+
+                int run_time = (remaining[i] < 4) ? remaining[i] : 4;
+                time += run_time;
+                remaining[i] -= run_time;
+
+                gantt[gcount].end_time = time;
+                gcount++;
+
+                if (remaining[i] == 0) {
+                    is_completed[i] = 1;
+                    completed++;
+                    results[i] = jobs[i];
+                    results[i].completion_time = time;
+                    results[i].turnaround_time = time - jobs[i].arrival_time;
+                    results[i].waiting_time = results[i].turnaround_time - jobs[i].burst_time;
+                }
+            }
+        }
+        if (!progress) break; // move to next level
+    }
+
+    // --- Level 2: RR q=8 ---
+    while (completed < n) {
+        int progress = 0;
+        for (int i = 0; i < n; i++) {
+            if (!is_completed[i] && remaining[i] > 0) {
+                progress = 1;
+                gantt[gcount].start_time = time;
+                strcpy(gantt[gcount].job_id, jobs[i].job_id);
+
+                int run_time = (remaining[i] < 8) ? remaining[i] : 8;
+                time += run_time;
+                remaining[i] -= run_time;
+
+                gantt[gcount].end_time = time;
+                gcount++;
+
+                if (remaining[i] == 0) {
+                    is_completed[i] = 1;
+                    completed++;
+                    results[i] = jobs[i];
+                    results[i].completion_time = time;
+                    results[i].turnaround_time = time - jobs[i].arrival_time;
+                    results[i].waiting_time = results[i].turnaround_time - jobs[i].burst_time;
+                }
+            }
+        }
+        if (!progress) break; // move to next level
+    }
+
+    // --- Level 3: FCFS ---
+    for (int i = 0; i < n; i++) {
+        if (!is_completed[i] && remaining[i] > 0) {
+            gantt[gcount].start_time = time;
+            strcpy(gantt[gcount].job_id, jobs[i].job_id);
+
+            time += remaining[i];
+            remaining[i] = 0;
+
+            gantt[gcount].end_time = time;
+            gcount++;
+
+            is_completed[i] = 1;
+            completed++;
+            results[i] = jobs[i];
+            results[i].completion_time = time;
+            results[i].turnaround_time = time - jobs[i].arrival_time;
+            results[i].waiting_time = results[i].turnaround_time - jobs[i].burst_time;
+        }
+    }
+
+    return gcount;
+}
 
 
 int main() {
@@ -236,10 +328,11 @@ int main() {
         return 1;
     }
 
-    Job jobs[MAX_JOBS], fcfs_results[MAX_JOBS], sjf_results[MAX_JOBS];
+    Job jobs[MAX_JOBS], fcfs_results[MAX_JOBS], sjf_results[MAX_JOBS], mlfq_results[MAX_JOBS];
     Job rr3_results[MAX_JOBS], rr6_results[MAX_JOBS];
     GanttEntry gantt_fcfs[MAX_JOBS * 10], gantt_sjf[MAX_JOBS * 50];
     GanttEntry gantt_rr3[MAX_JOBS * 50], gantt_rr6[MAX_JOBS * 50];
+    GanttEntry gantt_mlfq[MAX_JOBS * 50];
     int n = 0;
 
     while (fscanf(fp, "%s %d %d %d",
@@ -266,6 +359,10 @@ int main() {
     // Round Robin q=6
     int gcount_rr6 = round_robin(jobs, n, rr6_results, gantt_rr6, 6);
     print_schedule("Round Robin (q=6)", rr6_results, n, gantt_rr6, gcount_rr6);
+
+    //MLFQ
+    int gcount_mlfq = mlfq(jobs, n, mlfq_results, gantt_mlfq);
+    print_schedule("MLFQ (RR q=4 → RR q=8 → FCFS)", mlfq_results, n, gantt_mlfq, gcount_mlfq);
 
     return 0;
 }
