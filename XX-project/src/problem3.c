@@ -53,6 +53,61 @@ int fcfs(Job jobs[], int n, Job results[], GanttEntry gantt[]) {
     return gcount; // return how many entries were filled
 }
 
+int sjf_preemptive(Job jobs[], int n, Job results[], GanttEntry gantt[]) {
+    int completed = 0, time = 0, gcount = 0;
+    int remaining[MAX_JOBS];
+    int is_completed[MAX_JOBS] = {0};
+
+    for (int i = 0; i < n; i++) {
+        remaining[i] = jobs[i].burst_time;
+    }
+
+    while (completed < n) {
+        // find job with shortest remaining time among arrived jobs
+        int idx = -1;
+        int min_remaining = 1e9;
+        for (int i = 0; i < n; i++) {
+            if (jobs[i].arrival_time <= time && !is_completed[i] && remaining[i] < min_remaining && remaining[i] > 0) {
+                min_remaining = remaining[i];
+                idx = i;
+            }
+        }
+
+        if (idx == -1) {
+            // no job available, CPU idle
+            time++;
+            continue;
+        }
+
+        // record Gantt entry if new job or continuation of different job
+        if (gcount == 0 || strcmp(gantt[gcount-1].job_id, jobs[idx].job_id) != 0) {
+            gantt[gcount].start_time = time;
+            strcpy(gantt[gcount].job_id, jobs[idx].job_id);
+            gcount++;
+        }
+
+        // run job for 1 unit
+        time++;
+        remaining[idx]--;
+
+        // update end_time of current Gantt slice
+        gantt[gcount-1].end_time = time;
+
+        if (remaining[idx] == 0) {
+            is_completed[idx] = 1;
+            completed++;
+
+            results[idx] = jobs[idx]; // copy original fields
+            results[idx].completion_time = time;
+            results[idx].turnaround_time = time - jobs[idx].arrival_time;
+            results[idx].waiting_time = results[idx].turnaround_time - jobs[idx].burst_time;
+        }
+    }
+
+    return gcount;
+}
+
+
 void print_schedule(const char *label, Job jobs[], int n, GanttEntry gantt[], int gcount) {
     printf("\n=== %s ===\n", label);
 
@@ -98,8 +153,8 @@ int main() {
         return 1;
     }
 
-    Job jobs[MAX_JOBS], fcfs_results[MAX_JOBS];
-    GanttEntry gantt[MAX_JOBS * 10]; // allow extra for RR/MLFQ
+    Job jobs[MAX_JOBS], fcfs_results[MAX_JOBS], sjf_results[MAX_JOBS];
+    GanttEntry gantt_fcfs[MAX_JOBS * 10], gantt_sjf[MAX_JOBS * 10];
     int n = 0;
 
     while (fscanf(fp, "%s %d %d %d",
@@ -107,15 +162,17 @@ int main() {
               &jobs[n].arrival_time,
               &jobs[n].burst_time,
               &jobs[n].priority) == 4) {
-	//printf("Read: %s\n", jobs[n].job_id);
         n++;
     }
-
     fclose(fp);
 
-    int gcount = fcfs(jobs, n, fcfs_results, gantt);
-    print_schedule("FCFS", fcfs_results, n, gantt, gcount);
+    // FCFS
+    int gcount_fcfs = fcfs(jobs, n, fcfs_results, gantt_fcfs);
+    print_schedule("FCFS", fcfs_results, n, gantt_fcfs, gcount_fcfs);
 
-    // TODO: implement Preemptive SJF, RR (q=3,6), MLFQ
+    // Preemptive SJF
+    int gcount_sjf = sjf_preemptive(jobs, n, sjf_results, gantt_sjf);
+    print_schedule("Preemptive SJF", sjf_results, n, gantt_sjf, gcount_sjf);
+
     return 0;
 }
