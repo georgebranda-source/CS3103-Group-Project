@@ -189,72 +189,93 @@ int mlfq(Job jobs[], int n, Job results[], GanttEntry gantt[]) {
     int is_completed[MAX_JOBS] = {0};
 
     //1 round of RR with quantum 4
-    for (int i = 0; i < n; i++) {
-        if (!is_completed[i] && jobs[i].arrival_time <= time && remaining[i] > 0) {
-            gantt[gcount].start_time = time;
-            strcpy(gantt[gcount].job_id, jobs[i].job_id);
+    while (completed < n) {
+        int progress = 0;
+        for (int i = 0; i < n; i++) {
+            if (!is_completed[i] && jobs[i].arrival_time <= time && remaining[i] > 0) {
+                progress = 1;
+                gantt[gcount].start_time = time;
+                strcpy(gantt[gcount].job_id, jobs[i].job_id);
 
-            int run_time = (remaining[i] < 4) ? remaining[i] : 4;
-            time += run_time;
-            remaining[i] -= run_time;
+                int run_time = (remaining[i] < 4) ? remaining[i] : 4;
+                time += run_time;
+                remaining[i] -= run_time;
 
-            gantt[gcount].end_time = time;
-            gcount++;
+                gantt[gcount].end_time = time;
+                gcount++;
 
-            if (remaining[i] == 0) {
-                is_completed[i] = 1;
-                completed++;
-                results[i] = jobs[i];
-                results[i].completion_time = time;
-                results[i].turnaround_time = time - jobs[i].arrival_time;
-                results[i].waiting_time = results[i].turnaround_time - results[i].burst_time;
+                if (remaining[i] == 0) {
+                    is_completed[i] = 1;
+                    completed++;
+                    results[i] = jobs[i];
+                    results[i].completion_time = time;
+                    results[i].turnaround_time = time - jobs[i].arrival_time;
+                    results[i].waiting_time = results[i].turnaround_time - results[i].burst_time;
+                }
             }
         }
+        if (!progress) break;
     }
 
     //RR with quantum 8
-    for (int i = 0; i < n; i++) {
-        if (!is_completed[i] && remaining[i] > 0) {
-            gantt[gcount].start_time = time;
-            strcpy(gantt[gcount].job_id, jobs[i].job_id);
+    while (completed < n) {
+        int progress = 0;
+        for (int i = 0; i < n; i++) {
+            if (!is_completed[i] && jobs[i].arrival_time <= time && remaining[i] > 0) {
+                progress = 1;
+                gantt[gcount].start_time = time;
+                strcpy(gantt[gcount].job_id, jobs[i].job_id);
 
-            int run_time = (remaining[i] < 8) ? remaining[i] : 8;
-            time += run_time;
-            remaining[i] -= run_time;
+                int run_time = (remaining[i] < 8) ? remaining[i] : 8;
+                time += run_time;
+                remaining[i] -= run_time;
 
-            gantt[gcount].end_time = time;
-            gcount++;
+                gantt[gcount].end_time = time;
+                gcount++;
 
-            if (remaining[i] == 0) {
-                is_completed[i] = 1;
-                completed++;
-                results[i] = jobs[i];
-                results[i].completion_time = time;
-                results[i].turnaround_time = time - jobs[i].arrival_time;
-                results[i].waiting_time = results[i].turnaround_time - results[i].burst_time;
+                if (remaining[i] == 0) {
+                    is_completed[i] = 1;
+                    completed++;
+                    results[i] = jobs[i];
+                    results[i].completion_time = time;
+                    results[i].turnaround_time = time - jobs[i].arrival_time;
+                    results[i].waiting_time = results[i].turnaround_time - results[i].burst_time;
+                }
             }
         }
+        if (!progress) break;
     }
 
     //Finally FCFS
-    for (int i = 0; i < n; i++) {
-        if (!is_completed[i] && remaining[i] > 0) {
-            gantt[gcount].start_time = time;
-            strcpy(gantt[gcount].job_id, jobs[i].job_id);
-
-            time += remaining[i];
-            remaining[i] = 0;
-
-            gantt[gcount].end_time = time;
-            gcount++;
-
-            is_completed[i] = 1;
-            completed++;
-            results[i] = jobs[i];
-            results[i].completion_time = time;
-            results[i].turnaround_time = time - jobs[i].arrival_time;
-            results[i].waiting_time = results[i].turnaround_time - results[i].burst_time;
+    while (completed < n) {
+        int next_job = -1;
+        int earliest_arrival = INT_MAX;
+        for (int i = 0; i < n; i++) {
+            if (!is_completed[i] && jobs[i].arrival_time < earliest_arrival) {
+                earliest_arrival = jobs[i].arrival_time;
+                next_job = i;
+            }
         }
+        if (next_job == -1) break;
+
+        if (time < jobs[next_job].arrival_time)
+            time = jobs[next_job].arrival_time;
+
+        gantt[gcount].start_time = time;
+        strcpy(gantt[gcount].job_id, jobs[next_job].job_id);
+
+        time += remaining[next_job];
+        remaining[next_job] = 0;
+
+        gantt[gcount].end_time = time;
+        gcount++;
+
+        is_completed[next_job] = 1;
+        completed++;
+        results[next_job] = jobs[next_job];
+        results[next_job].completion_time = time;
+        results[next_job].turnaround_time = time - jobs[next_job].arrival_time;
+        results[next_job].waiting_time = results[next_job].turnaround_time - results[next_job].burst_time;
     }
 
     return gcount;
